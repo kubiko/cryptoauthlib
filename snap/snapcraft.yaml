@@ -1,0 +1,68 @@
+name: cryptoauth
+summary: cyptoauth snap
+description: |
+ C library which supports Microchip CryptoAuth devices
+
+adopt-info: cryptoauthlib
+confinement: strict
+grade: stable
+architectures:
+    - build-on: armhf
+    - build-on: arm64
+    - build-on: amd64
+
+base: core18
+
+environment:
+    ATCA_LIBRARY_CONF: $SNAP_COMMON/etc/cryptoauthlib/cryptoauthlib.conf
+
+parts:
+    cryptoauthlib:
+        plugin: nil
+        source: .
+        override-build: |
+            # deternime between native and cross
+            if [ -n "$(uname -a | grep x86_64)" ]; then
+                # building in amd64, are we cross compiling
+                if [ "${SNAPCRAFT_ARCH_TRIPLET}" = "arm-linux-gnueabihf" ]; then
+                  echo "cross compiling for armhf"
+                  cmake cmake -DCMAKE_TOOLCHAIN_FILE=cross-arm-linux-gnueabihf.cmake .
+                elif [ "${SNAPCRAFT_ARCH_TRIPLET}" = "aarch64-linux-gnu" ]; then
+                  echo "cross compiling for arm64"
+                  cmake cmake -DCMAKE_TOOLCHAIN_FILE=cross-aarch64.cmake .
+                else
+                  # native build
+                  cmake .
+                fi
+            else
+              # native build
+              cmake .
+            fi
+            make -j$(nproc)
+            DESTDIR="${SNAPCRAFT_PART_INSTALL}" make install
+            snapcraftctl set-version $(git describe --tag | cut -c 2-)
+        stage-packages:
+            - to amd64:
+                - p11-kit:amd64
+                - libengine-pkcs11-openssl:amd64
+            - to armhf:
+                - p11-kit:armhf
+                - libengine-pkcs11-openssl:armhf
+            - to arm64:
+                - p11-kit:arm64
+                - libengine-pkcs11-openssl:arm64
+build-packages:
+    - cmake
+    - libudev-dev
+    - on amd64:
+      - to armhf:
+        - gcc-arm-linux-gnueabihf:amd64
+        - g++-arm-linux-gnueabihf:amd64
+      - to arm64:
+        - gcc-aarch64-linux-gnu:amd64
+        - g++-aarch64-linux-gnu:amd64
+      - else:
+        - gcc
+    - else:
+      - gcc
+      
