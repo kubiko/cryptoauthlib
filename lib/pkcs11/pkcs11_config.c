@@ -529,7 +529,12 @@ CK_RV pkcs11_config_load_objects(pkcs11_slot_ctx_ptr slot_ctx)
     CK_RV rv;
 
     /* Open the general library configuration */
-    fp = fopen(ATCA_LIBRARY_CONF, "rb");
+    const char *config_path = getenv("ATCA_LIBRARY_CONF");
+    if (config_path) {
+        fp = fopen(config_path, "rb");
+    } else {
+        fp = fopen(ATCA_LIBRARY_CONF, "rb");
+    }
     if (fp)
     {
         buflen = pkcs11_config_load_file(fp, &buffer);
