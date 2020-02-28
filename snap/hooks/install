@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# copy and modify default configuration
+mkdir -p ${SNAP_COMMON}/etc
+cp -r ${SNAP}/etc/cryptoauthlib ${SNAP_COMMON}/etc/
+
+mkdir -p ${SNAP_COMMON}/var/lib/cryptoauthlib
+sed -is 's|/var/lib/cryptoauthlib|'"$SNAP_COMMON"'/var/lib/cryptoauthlib|g' ${SNAP_COMMON}/etc/cryptoauthlib/cryptoauthlib.conf
